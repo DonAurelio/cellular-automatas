@@ -1,0 +1,24 @@
+/* CA Specification format
+	Lattice: 
+		- Structure: Euclidean ( one dimensional | two dimesional )
+		Hexagonal ( This property depend of the neighbohood )
+		- Size: "The maximun size can be caculated by the available free memory"
+			* X dimension
+			* Y dimension
+		- Boundary Conditions: ( fixed | toroidal (all matrix | some sides))
+		this condition is given on the rule
+	
+	Neighoorhood: ( Neuman | Moore | hexagonal |custome )
+	
+	Set of states: 
+		- Type: ( structure | int | bool | bit | array | ... )
+		- Initial state ( function | initial config matrx )
+
+	Transition function: ( function | mapping table )
+		- identify with changes depend directli of the transition function
+
+	CA Running parameters:
+		- number of generations ( int )
+		- upto some function condition ( function )
+	HINT : CONSIDER A C TEMPLATE FOR THIS POURPUSES
+*/
