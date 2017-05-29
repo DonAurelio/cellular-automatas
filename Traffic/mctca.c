@@ -7,16 +7,15 @@
 #include <math.h> /* Random Number Generator */
 #include <time.h> /* Random Number Generator */
 
-#define colDim 6
+#define colDim 9
 #define rowDim 50
 
 #define Freeway 0
 #define Car 1
 #define Motorbike 2
 
-#define VehicheProb 0.2
-#define CarProb 0.2
-#define MotorbikeProb 0.2
+#define VehicheProb 0.1
+#define CarProb 0.1
 
 #define Vmax 5
 #define DeaccelProb 0.0
@@ -52,12 +51,12 @@ struct Cell
 void initialize( struct Cell ** matrix ){
     for (int i = 0; i < rowDim; ++i){
         for (int j = 0; j < colDim; ++j){
-            matrix[i][j] = (struct Cell){ .type = Freeway, .velocity = 0 };
+            matrix[i][j] = (struct Cell) { .type = Freeway, .velocity = 0 };
         }
     } 
 }
 
-void putCar(struct Cell ** matrix, int row, int col){
+void newCar(struct Cell ** matrix, int row, int col){
     if(row + 1 < rowDim && col + 1 < colDim){
         struct Cell car = { .type = Car, .velocity = rnd() * Vmax + 1 };
         matrix[row][col] = car;
@@ -67,7 +66,7 @@ void putCar(struct Cell ** matrix, int row, int col){
     }
 }
 
-void putMotorbike(struct Cell ** matrix, int row, int col){
+void newMotorbike(struct Cell ** matrix, int row, int col){
     if(row + 1 < rowDim && col + 1 < colDim){
         struct Cell motorbike = { .type = Motorbike, .velocity = rnd() * Vmax + 1 };
         matrix[row][col] = motorbike;
@@ -78,11 +77,10 @@ void fillCellularSpace( struct Cell ** matrix ){
     for (int i = 0; i < rowDim; ++i){
         for (int j = 0; j < colDim; ++j){
             if(rnd() < VehicheProb && (matrix[i][j]).type == Freeway){
-                if(rnd() < CarProb){
-                    putCar(matrix,i,j);
-                }else{
-                    putMotorbike(matrix,i,j);
-                }
+                if(rnd() < CarProb)
+                    newCar(matrix,i,j);
+                else
+                    newMotorbike(matrix,i,j);
             }
         }
     }
@@ -121,25 +119,23 @@ void fillCellularSpace( struct Cell ** matrix ){
 // }
 
 
-// void nextState( int ** in, int ** out, int row, int col ){
-    
-//     // struct Neighborhood nbhd = neighborhoodOf(in,col,row);
+void nextState( struct Cell ** in, struct Cell ** out, int row, int col ){
 
-//     int velocity = in[row][col];
+    struct Cell cell = in[row][col];
 
-//     if(velocity != Freeway){
-//         // Step 1: Acceleration
-//         velocity = MIN(velocity + 1,Vmax);
-//         // Step 2: Safe distance
-//         int freecells = 0;
-//         for(int i = row; in[ MOD( i - 1 , rowDim ) ][col] == Freeway; i = MOD( i - 1, rowDim )) ++freecells;
-//         velocity = MIN(velocity,freecells - 1);
-//         // Step 3: Randomness deacceleration
-//         velocity = ( rnd() < DeaccelProb ) ? MAX(0,velocity - 1) : velocity;
-//         // Step 4: New position
-//         out[ MOD( row - velocity, rowDim ) ][col] = velocity;
-//     }
-// }
+    if(cell.type != Freeway){
+        // Step 1: Acceleration
+        velocity = MIN(velocity + 1,Vmax);
+        // Step 2: Safe distance
+        int freecells = 0;
+        for(int i = row; in[ MOD( i - 1 , rowDim ) ][col] == Freeway; i = MOD( i - 1, rowDim )) ++freecells;
+        velocity = MIN(velocity,freecells - 1);
+        // Step 3: Randomness deacceleration
+        velocity = ( rnd() < DeaccelProb ) ? MAX(0,velocity - 1) : velocity;
+        // Step 4: New position
+        out[ MOD( row - velocity, rowDim ) ][col] = velocity;
+    }
+}
 
 // void step( int ** in, int ** out)
 // {
@@ -151,7 +147,7 @@ void fillCellularSpace( struct Cell ** matrix ){
 //     }
 // }
 
-void see( int ** matrix){
+void see(struct Cell ** matrix){
     printf("\n");
     int i = 0;
     for (i=0; i<rowDim; ++i){
@@ -159,9 +155,12 @@ void see( int ** matrix){
         for (j=0; j<colDim; ++j){
             if(matrix[i][j].type == Freeway)
                 printf("[ ] ");
-            else
-                // printf("[%d] ",matrix[i][j]);
-                printf("[%d] ",matrix[i][j].velocity);
+            else{
+                if(matrix[i][j].type == Car)
+                    printf("[*] ");
+                else
+                    printf("[^] ");
+            }
         }
         printf("\n");
     }
@@ -205,8 +204,7 @@ int main(int argc, char const **argv)
 
     initialize(in);
     fillCellularSpace(in);
-    // clearCellularSpace(out);
-    // see(in);
+    see(in);
 
     /* Running simulation */
     // evolve(in,out);
