@@ -6,6 +6,7 @@
 #include <thread> /* Console Debug */
 #include <math.h>
 #include <time.h>
+#include <omp.h>
 
 #define Generations 50
 #define FillProb 0.5
@@ -131,15 +132,19 @@ void sequentialstep(bool ** in, bool ** out, int rowDim, int colDim){
     }
 }
 
-// void parallelstepGPT(bool ** in, bool ** out, int rowDim, int colDim){
-//     #pragma omp parallel num_threads(rowDim*colDim)
-//     {
-//         int thread_id =  omp_get_thread_num();
-//         int my_row = thread_id / rowDim;
-//         int my_col = MOD(thread_id,colDim);
-//         out[my_row][my_col] = nextState(in,my_row,my_col,rowDim,colDim);
-//     }
-// }
+void parallelstepCPT(bool ** in, bool ** out, int rowDim, int colDim){
+    #pragma omp parallel num_threads(rowDim*colDim)
+    {
+        int thread_id =  omp_get_thread_num();
+        int my_row = thread_id / rowDim;
+        int my_col = MOD(thread_id,colDim);
+        out[my_row][my_col] = nextState(in,my_row,my_col,rowDim,colDim);
+    }
+}
+
+void parallelstepGPT(bool ** in, bool ** out, int rowDim, colDim){
+
+}
 
 /*
 Visualization function
@@ -165,8 +170,8 @@ void evolve(bool ** in, bool ** out, int rowDim, int colDim){
     double sum = 0.0;
     for (i = 1; i <= Generations; ++i){
         start = clock();
-        // sequentialstep(in,out,rowDim,colDim);
-        // parallelstepGPT(in,out,rowDim,colDim);
+        sequentialstep(in,out,rowDim,colDim);
+        parallelstepCPT(in,out,rowDim,colDim);
         end = clock();
         sum += (end -start) / (double) CLOCKS_PER_SEC;
         
