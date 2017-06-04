@@ -142,8 +142,29 @@ void parallelstepCPT(bool ** in, bool ** out, int rowDim, int colDim){
     }
 }
 
-void parallelstepGPT(bool ** in, bool ** out, int rowDim, colDim){
+void parallelstepGPT(bool ** in, bool ** out, int rowDim, int colDim){
+    #pragma omp parallel num_threads(4)
+    {
+        int procs_num = omp_get_num_procs();
+        int blockDim = rowDim / (procs_num / 2);
+        int thread_id = omp_get_thread_num();
 
+        int blockx = thread_id / (procs_num/2);
+        int blocky = MOD(thread_id,(procs_num/2));
+
+        int x = 0;
+        int y = 0;
+        printf("I ' am thread %d\n",thread_id);
+        for(int i = 0; i < blockDim; ++i){
+            x = blockDim * blockx + i;
+            for(int j = 0; j < blockDim; ++j){
+                y = blockDim * blocky + j;
+                // out[x][y] = nextState(in,x,y,rowDim,colDim);
+                printf("Point %d,%d\n",x,y);
+            }
+        }
+    
+    }
 }
 
 /*
@@ -170,8 +191,9 @@ void evolve(bool ** in, bool ** out, int rowDim, int colDim){
     double sum = 0.0;
     for (i = 1; i <= Generations; ++i){
         start = clock();
-        sequentialstep(in,out,rowDim,colDim);
-        parallelstepCPT(in,out,rowDim,colDim);
+        // sequentialstep(in,out,rowDim,colDim);
+        // parallelstepCPT(in,out,rowDim,colDim);
+        // parallelstepGPT(in,out,rowDim,colDim);
         end = clock();
         sum += (end -start) / (double) CLOCKS_PER_SEC;
         
@@ -192,6 +214,8 @@ void evolve(bool ** in, bool ** out, int rowDim, int colDim){
 int main(int argc, char const **argv)
 {
     /* Matrix dimesions */
+    /* The matrix dimensions has to be even (pair) and multiple of the number
+    of processing cores */
     if(argc < 2){
         printf("CA dimension is required as argument\n");
         return EXIT_SUCCESS;
@@ -212,7 +236,9 @@ int main(int argc, char const **argv)
     }
 
     fillCellularSpace(in,rowDim,colDim);
-    evolve(in,out,rowDim,colDim);
+    // evolve(in,out,rowDim,colDim);
+    parallelstepGPT(in,out,rowDim,colDim);
+
 
     /* -- Releasing resources -- */
     for (i=0; i<rowDim; ++i) free(in[i]);

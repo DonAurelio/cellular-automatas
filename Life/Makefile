@@ -3,13 +3,13 @@ run: compile
 
 compile:
 	# -std=gnu++1 for chrono library
-	@g++ sequential.c -std=gnu++11 
+	@g++ openmp.c -std=gnu++11 
 
 runp: compilep
 	@./a.out 20
 
 compilep:
-	@g++ sequential.c -std=gnu++11 -fopenmp
+	@g++ openmp.c -std=gnu++11 -fopenmp
 
 clean:
 	rm -rf *.out 
