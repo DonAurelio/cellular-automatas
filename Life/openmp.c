@@ -154,16 +154,20 @@ void parallelstepGPT(bool ** in, bool ** out, int rowDim, int colDim){
 
         int x = 0;
         int y = 0;
-        printf("I ' am thread %d\n",thread_id);
+
+        // if (thread_id == 1){
+        //     printf("I ' am thread %d\n",thread_id);
+        //     printf("BlockDim %d\n",blockDim);
+        //     printf("blockx,blocky %d,%d\n",blockx,blocky);
         for(int i = 0; i < blockDim; ++i){
             x = blockDim * blockx + i;
             for(int j = 0; j < blockDim; ++j){
                 y = blockDim * blocky + j;
-                // out[x][y] = nextState(in,x,y,rowDim,colDim);
-                printf("Point %d,%d\n",x,y);
+                out[x][y] = nextState(in,x,y,rowDim,colDim);
+                // printf("Point %d,%d\n",x,y);
             }
         }
-    
+        // }
     }
 }
 
@@ -193,7 +197,7 @@ void evolve(bool ** in, bool ** out, int rowDim, int colDim){
         start = clock();
         // sequentialstep(in,out,rowDim,colDim);
         // parallelstepCPT(in,out,rowDim,colDim);
-        // parallelstepGPT(in,out,rowDim,colDim);
+        parallelstepGPT(in,out,rowDim,colDim);
         end = clock();
         sum += (end -start) / (double) CLOCKS_PER_SEC;
         
@@ -236,8 +240,8 @@ int main(int argc, char const **argv)
     }
 
     fillCellularSpace(in,rowDim,colDim);
-    // evolve(in,out,rowDim,colDim);
-    parallelstepGPT(in,out,rowDim,colDim);
+    evolve(in,out,rowDim,colDim);
+    // parallelstepGPT(in,out,rowDim,colDim);
 
 
     /* -- Releasing resources -- */
