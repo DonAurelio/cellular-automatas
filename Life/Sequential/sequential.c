@@ -6,47 +6,15 @@
 #include <thread> /* Console Debug */
 #include <math.h>
 #include <time.h>
-#include <omp.h>
 
-#define Generations 50
-#define FillProb 0.5
-#define PI 3.14159265358979323846
 #define MOD(a,b) ((((a)%(b))+(b))%(b))
 
-/* -- Initialize CA space: functions definition -- */
-bool initialize(){
-    
-    double pi = 3.14159265358979323846;
-    clock_t t;
-    t=clock();
-    double tc;
-    tc = (((float)t)/CLOCKS_PER_SEC);
-    long double X = fmod ((pi*t)+(pi/tc),(pi/tc));/*Seed*/
-    double M = 2147483648,n;
-    int a = 1103515245,c=12345,i;
-    for(i=1;i<5;i++){
-        X = fmod ((a*X+c),M);// Linear congruence
-        n = (X/(M-1));
-    }  
-    return (n < FillProb) ? 1 : 0;
-
-}
-/* The user defines how initialice the cellular space */
 void fillCellularSpace( bool ** matrix, int rowDim, int colDim ){
-    int i = 0, j = 0;
-    for (i = 0; i < rowDim; ++i){
-        for (j = 0; j < colDim; ++j){
-            // matrix[i][j] = initialize();
-            matrix[i][j] = 0;
-        }
-    }
     matrix[10][10] = 1;
     matrix[10][11] = 1;
     matrix[11][11] = 1;
     matrix[10][12] = 1;
 }
-
-/* -- Neighbooring function definition */
 
 struct Neighborhood
 {
@@ -62,9 +30,6 @@ struct Neighborhood
 
 };
 
-/*
-This function has to return the neighborhood of a given site on the cellular space
-*/
 struct Neighborhood neighborhoodOf(bool ** matrix, int row, int col, int rowDim, int colDim){
     struct Neighborhood nbhd;
     nbhd.up = matrix[ MOD(row - 1,rowDim) ][ col ];
@@ -89,11 +54,6 @@ struct Neighborhood neighborhoodOf(bool ** matrix, int row, int col, int rowDim,
 }
 
 
-/* -- Transition function definition -- */
-
-/*
-This function has to define how a given site change its state to an new one
-*/
 bool nextState(bool ** matrix, int row, int col, int rowDim, int colDim){
     
     struct Neighborhood nbhd = neighborhoodOf(matrix,row,col,rowDim,colDim);
@@ -119,10 +79,6 @@ bool nextState(bool ** matrix, int row, int col, int rowDim, int colDim){
 
 }
 
-/*
-This function brings the cellular space to the next generation
-HINT : THE BODY OF THIS FUNCTION IS ATRACTIVE FOR PARALLEL EXECUTION
-*/
 void sequentialstep(bool ** in, bool ** out, int rowDim, int colDim){
     int i = 0, j = 0;
     for (i = 0; i < rowDim; ++i){
@@ -132,48 +88,6 @@ void sequentialstep(bool ** in, bool ** out, int rowDim, int colDim){
     }
 }
 
-void parallelstepCPT(bool ** in, bool ** out, int rowDim, int colDim){
-    #pragma omp parallel num_threads(rowDim*colDim)
-    {
-        int thread_id =  omp_get_thread_num();
-        int my_row = thread_id / rowDim;
-        int my_col = MOD(thread_id,colDim);
-        out[my_row][my_col] = nextState(in,my_row,my_col,rowDim,colDim);
-    }
-}
-
-void parallelstepGPT(bool ** in, bool ** out, int rowDim, int colDim){
-    #pragma omp parallel num_threads(4)
-    {
-        int procs_num = omp_get_num_procs();
-        int blockDim = rowDim / (procs_num / 2);
-        int thread_id = omp_get_thread_num();
-
-        int blockx = thread_id / (procs_num/2);
-        int blocky = MOD(thread_id,(procs_num/2));
-
-        int x = 0;
-        int y = 0;
-
-        // if (thread_id == 1){
-        //     printf("I ' am thread %d\n",thread_id);
-        //     printf("BlockDim %d\n",blockDim);
-        //     printf("blockx,blocky %d,%d\n",blockx,blocky);
-        for(int i = 0; i < blockDim; ++i){
-            x = blockDim * blockx + i;
-            for(int j = 0; j < blockDim; ++j){
-                y = blockDim * blocky + j;
-                out[x][y] = nextState(in,x,y,rowDim,colDim);
-                // printf("Point %d,%d\n",x,y);
-            }
-        }
-        // }
-    }
-}
-
-/*
-Visualization function
-*/
 void see(bool ** matrix, int rowDim, int colDim){
     printf("\n");
     int i = 0;
@@ -185,19 +99,13 @@ void see(bool ** matrix, int rowDim, int colDim){
     printf("\n");
 }
 
-/*
-This function aims for the way in wich the transition rule (next state) is applyed 
-into the cellular space 
-*/
-void evolve(bool ** in, bool ** out, int rowDim, int colDim){
+void evolve(bool ** in, bool ** out, int rowDim, int colDim, int generations){
     int i = 0;
     clock_t start = 0.0, end = 0.0;
     double sum = 0.0;
-    for (i = 1; i <= Generations; ++i){
+    for (i = 1; i <= generations; ++i){
         start = clock();
-        // sequentialstep(in,out,rowDim,colDim);
-        // parallelstepCPT(in,out,rowDim,colDim);
-        parallelstepGPT(in,out,rowDim,colDim);
+        sequentialstep(in,out,rowDim,colDim);
         end = clock();
         sum += (end -start) / (double) CLOCKS_PER_SEC;
         
@@ -220,12 +128,13 @@ int main(int argc, char const **argv)
     /* Matrix dimesions */
     /* The matrix dimensions has to be even (pair) and multiple of the number
     of processing cores */
-    if(argc < 2){
-        printf("CA dimension is required as argument\n");
+    if(argc < 3){
+        printf("CA dimension and number of generations are required as argument\n");
         return EXIT_SUCCESS;
     }
     
     int dim = atoi(argv[1]);
+    int generations = atoi(argv[2]);
     int rowDim = dim, colDim = dim;
 
     /* -- Celular space initialization -- */
@@ -240,9 +149,7 @@ int main(int argc, char const **argv)
     }
 
     fillCellularSpace(in,rowDim,colDim);
-    evolve(in,out,rowDim,colDim);
-    // parallelstepGPT(in,out,rowDim,colDim);
-
+    evolve(in,out,rowDim,colDim,generations);
 
     /* -- Releasing resources -- */
     for (i=0; i<rowDim; ++i) free(in[i]);
