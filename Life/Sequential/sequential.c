@@ -109,11 +109,14 @@ void evolve(bool ** in, bool ** out, int rowDim, int colDim, int generations){
         end = clock();
         sum += (end -start) / (double) CLOCKS_PER_SEC;
         
+        #ifdef DEBUG    
         see(out,rowDim,colDim);
+        #endif
 
         bool ** temp = in;
         in = out;
         out = temp;
+        
         #ifdef DEBUG
         std::this_thread::sleep_for(std::chrono::duration<double>(0.3));
         printf("\033[H\033[J");
@@ -122,7 +125,7 @@ void evolve(bool ** in, bool ** out, int rowDim, int colDim, int generations){
     // Average time calculation per generation
     // Number of generations per second
     #ifndef DEBUG
-    printf("%f\t%f",(sum/generations),generations/sum);
+    printf("%f\t%f\t%f\n",sum,(sum/generations),generations/sum);
     #endif
 }
 
