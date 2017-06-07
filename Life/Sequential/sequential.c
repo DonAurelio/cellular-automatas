@@ -114,13 +114,16 @@ void evolve(bool ** in, bool ** out, int rowDim, int colDim, int generations){
         bool ** temp = in;
         in = out;
         out = temp;
-
+        #ifdef DEBUG
         std::this_thread::sleep_for(std::chrono::duration<double>(0.3));
         printf("\033[H\033[J");
+        #endif 
     }
     // Average time calculation per generation
     // Number of generations per second
-    // printf("%f\t%f",(sum/Generations),Generations/sum);
+    #ifndef DEBUG
+    printf("%f\t%f",(sum/generations),generations/sum);
+    #endif
 }
 
 int main(int argc, char const **argv)

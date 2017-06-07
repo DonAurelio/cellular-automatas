@@ -10,40 +10,12 @@
 
 #define MOD(a,b) ((((a)%(b))+(b))%(b))
 
-/* -- Initialize CA space: functions definition -- */
-bool initialize(){
-    
-    double pi = 3.14159265358979323846;
-    clock_t t;
-    t=clock();
-    double tc;
-    tc = (((float)t)/CLOCKS_PER_SEC);
-    long double X = fmod ((pi*t)+(pi/tc),(pi/tc));/*Seed*/
-    double M = 2147483648,n;
-    int a = 1103515245,c=12345,i;
-    for(i=1;i<5;i++){
-        X = fmod ((a*X+c),M);// Linear congruence
-        n = (X/(M-1));
-    }  
-    return (n < FillProb) ? 1 : 0;
-
-}
-/* The user defines how initialice the cellular space */
 void fillCellularSpace( bool ** matrix, int rowDim, int colDim ){
-    int i = 0, j = 0;
-    for (i = 0; i < rowDim; ++i){
-        for (j = 0; j < colDim; ++j){
-            // matrix[i][j] = initialize();
-            matrix[i][j] = 0;
-        }
-    }
     matrix[10][10] = 1;
     matrix[10][11] = 1;
     matrix[11][11] = 1;
     matrix[10][12] = 1;
 }
-
-/* -- Neighbooring function definition */
 
 struct Neighborhood
 {
@@ -85,12 +57,6 @@ struct Neighborhood neighborhoodOf(bool ** matrix, int row, int col, int rowDim,
     return nbhd;
 }
 
-
-/* -- Transition function definition -- */
-
-/*
-This function has to define how a given site change its state to an new one
-*/
 bool nextState(bool ** matrix, int row, int col, int rowDim, int colDim){
     
     struct Neighborhood nbhd = neighborhoodOf(matrix,row,col,rowDim,colDim);
@@ -114,19 +80,6 @@ bool nextState(bool ** matrix, int row, int col, int rowDim, int colDim){
 
     return life;
 
-}
-
-/*
-This function brings the cellular space to the next generation
-HINT : THE BODY OF THIS FUNCTION IS ATRACTIVE FOR PARALLEL EXECUTION
-*/
-void sequentialstep(bool ** in, bool ** out, int rowDim, int colDim){
-    int i = 0, j = 0;
-    for (i = 0; i < rowDim; ++i){
-        for (j = 0; j < colDim; ++j){
-            out[i][j] = nextState(in,i,j,rowDim,colDim);
-        }
-    }
 }
 
 void parallelstepCPT(bool ** in, bool ** out, int rowDim, int colDim){
@@ -168,9 +121,6 @@ void parallelstepGPT(bool ** in, bool ** out, int rowDim, int colDim){
     }
 }
 
-/*
-Visualization function
-*/
 void see(bool ** matrix, int rowDim, int colDim){
     printf("\n");
     int i = 0;
@@ -182,17 +132,12 @@ void see(bool ** matrix, int rowDim, int colDim){
     printf("\n");
 }
 
-/*
-This function aims for the way in wich the transition rule (next state) is applyed 
-into the cellular space 
-*/
-void evolve(bool ** in, bool ** out, int rowDim, int colDim){
+void evolve(bool ** in, bool ** out, int rowDim, int colDim, int generations){
     int i = 0;
     clock_t start = 0.0, end = 0.0;
     double sum = 0.0;
-    for (i = 1; i <= Generations; ++i){
+    for (i = 1; i <= generations; ++i){
         start = clock();
-        // sequentialstep(in,out,rowDim,colDim);
         parallelstepCPT(in,out,rowDim,colDim);
         // parallelstepGPT(in,out,rowDim,colDim);
         end = clock();
@@ -209,7 +154,7 @@ void evolve(bool ** in, bool ** out, int rowDim, int colDim){
     }
     // Average time calculation per generation
     // Number of generations per second
-    // printf("%f\t%f",(sum/Generations),Generations/sum);
+    printf("%f\t%f\n",(sum/Generations),Generations/sum);
 }
 
 int main(int argc, char const **argv)
@@ -217,12 +162,13 @@ int main(int argc, char const **argv)
     /* Matrix dimesions */
     /* The matrix dimensions has to be even (pair) and multiple of the number
     of processing cores */
-    if(argc < 2){
+    if(argc < 3){
         printf("CA dimension is required as argument\n");
         return EXIT_SUCCESS;
     }
     
     int dim = atoi(argv[1]);
+    int generations = atoi(argv[2]);
     int rowDim = dim, colDim = dim;
 
     /* -- Celular space initialization -- */
@@ -237,9 +183,7 @@ int main(int argc, char const **argv)
     }
 
     fillCellularSpace(in,rowDim,colDim);
-    evolve(in,out,rowDim,colDim);
-    // parallelstepGPT(in,out,rowDim,colDim);
-
+    evolve(in,out,rowDim,colDim,generations);
 
     /* -- Releasing resources -- */
     for (i=0; i<rowDim; ++i) free(in[i]);
