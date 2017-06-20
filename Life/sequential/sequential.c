@@ -107,14 +107,22 @@ void save(const char * filename, bool ** matrix, int rowDim, int colDim){
     fclose(pf);
 }
 
+void savetime(int matrixDim, float time){
+    FILE * pf = fopen("time.dat","a+");
+    fprintf(pf, "%d\t%f", matrixDim,time);
+    fclose(pf); 
+}
+
 void evolve(bool ** in, bool ** out, int rowDim, int colDim, int generations){
     int i = 0;
     clock_t start = 0.0, end = 0.0;
     double sum = 0.0;
+    char filename[30];
 
     // Save CA initial configuration
     #ifdef SAVEINIT
-    save("initstate.dat",in,rowDim,colDim);
+    sprintf(filename,"dim_%d_gen_%d.dat",rowDim,0);
+    save(filename,in,rowDim,colDim);
     #endif
 
     for (i = 1; i <= generations; ++i){
@@ -135,19 +143,18 @@ void evolve(bool ** in, bool ** out, int rowDim, int colDim, int generations){
         
         // Save all CA generations
         #ifdef SAVEALL
-        char filename[20];
-        sprintf(filename,"gen_%d.dat",i);
+        sprintf(filename,"dim_%d_gen_%d.dat",rowDim,i);
         save(filename,in,rowDim,colDim);
         #endif 
     }
 
     // Save CA last generation
     #ifdef SAVELAST
-    save("initstate.dat",in,rowDim,colDim);
+    save("lastg.dat",in,rowDim,colDim);
     #endif
 
-    #ifndef DEBUG 
-    printf("%f\n",sum);
+    #ifdef TIME 
+    savetime(rowDim,sum);
     #endif
 
 }
