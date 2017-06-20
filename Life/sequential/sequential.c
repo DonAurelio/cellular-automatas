@@ -76,7 +76,6 @@ bool nextState(bool ** matrix, int row, int col, int rowDim, int colDim){
     }
 
     return life;
-
 }
 
 void sequentialstep(bool ** in, bool ** out, int rowDim, int colDim){
@@ -99,34 +98,58 @@ void see(bool ** matrix, int rowDim, int colDim){
     printf("\n");
 }
 
+void save(const char * filename, bool ** matrix, int rowDim, int colDim){
+    FILE * pf = fopen(filename,"w");
+    for (int i=0; i<rowDim; ++i){
+        for (int j=0; j<colDim; ++j) fprintf(pf, "%d\t", matrix[i][j]);
+        fprintf(pf, "\n");
+    }
+    fclose(pf);
+}
+
 void evolve(bool ** in, bool ** out, int rowDim, int colDim, int generations){
     int i = 0;
     clock_t start = 0.0, end = 0.0;
     double sum = 0.0;
+
+    // Save CA initial configuration
+    #ifdef SAVEINIT
+    save("initstate.dat",in,rowDim,colDim);
+    #endif
+
     for (i = 1; i <= generations; ++i){
         start = clock();
         sequentialstep(in,out,rowDim,colDim);
         end = clock();
         sum += (end -start) / (double) CLOCKS_PER_SEC;
         
-        #ifdef DEBUG    
-        see(out,rowDim,colDim);
-        #endif
-
         bool ** temp = in;
         in = out;
         out = temp;
-        
+
         #ifdef DEBUG
+        see(in,rowDim,colDim);
         std::this_thread::sleep_for(std::chrono::duration<double>(0.3));
         printf("\033[H\033[J");
+        #endif
+        
+        // Save all CA generations
+        #ifdef SAVEALL
+        char filename[20];
+        sprintf(filename,"gen_%d.dat",i);
+        save(filename,in,rowDim,colDim);
         #endif 
     }
-    // Average time calculation per generation
-    // Number of generations per second
-    #ifndef DEBUG
-    printf("%f\t%f\t%f\n",sum,(sum/generations),generations/sum);
+
+    // Save CA last generation
+    #ifdef SAVELAST
+    save("initstate.dat",in,rowDim,colDim);
     #endif
+
+    #ifndef DEBUG 
+    printf("%f\n",sum);
+    #endif
+
 }
 
 int main(int argc, char const **argv)
@@ -136,7 +159,7 @@ int main(int argc, char const **argv)
     of processing cores */
     if(argc < 3){
         printf("CA dimension and number of generations are required as argument\n");
-        return EXIT_SUCCESS;
+        return EXIT_FAILURE;
     }
     
     int dim = atoi(argv[1]);
