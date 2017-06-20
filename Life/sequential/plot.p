@@ -7,8 +7,8 @@ set xtics 1
 set ytics 1
 set title "Resolution Matrix for E"
 
-set tics scale 0,0.001
+set tics scale 0,0.0001
 set mxtics 2
 set mytics 2
 set grid front mxtics mytics lw 0.2 lt -1 lc rgb 'black'
-plot "laststate.dat" matrix w image noti
+plot "dim_100_gen_100.dat" matrix w image noti

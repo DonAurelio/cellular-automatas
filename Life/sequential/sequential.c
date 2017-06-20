@@ -9,6 +9,12 @@
 
 #define MOD(a,b) ((((a)%(b))+(b))%(b))
 
+void initialize( bool ** matrix, int rowDim, int colDim ){
+    for (int i=0; i<rowDim; ++i){
+        for (int j=0; j<colDim; ++j) matrix[i][j] = 0;
+    }
+}
+
 void fillCellularSpace( bool ** matrix, int rowDim, int colDim ){
     matrix[10][10] = 1;
     matrix[10][11] = 1;
@@ -109,7 +115,7 @@ void save(const char * filename, bool ** matrix, int rowDim, int colDim){
 
 void savetime(int matrixDim, float time){
     FILE * pf = fopen("time.dat","a+");
-    fprintf(pf, "%d\t%f", matrixDim,time);
+    fprintf(pf, "%d\t%f\n", matrixDim,time);
     fclose(pf); 
 }
 
@@ -150,7 +156,8 @@ void evolve(bool ** in, bool ** out, int rowDim, int colDim, int generations){
 
     // Save CA last generation
     #ifdef SAVELAST
-    save("lastg.dat",in,rowDim,colDim);
+    sprintf(filename,"dim_%d_gen_%d.dat",rowDim,generations);
+    save(filename,in,rowDim,colDim);
     #endif
 
     #ifdef TIME 
@@ -184,6 +191,8 @@ int main(int argc, char const **argv)
         out[i] = (bool *) malloc(colDim*sizeof(bool));
     }
 
+    initialize(in,rowDim,colDim);
+    initialize(out,rowDim,colDim);
     fillCellularSpace(in,rowDim,colDim);
     evolve(in,out,rowDim,colDim,generations);
 

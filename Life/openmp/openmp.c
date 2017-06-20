@@ -1,14 +1,21 @@
 
 /* -- Host libaries -- */
-#include <stdio.h> /* Standard I/O Library: printf */
+#include <stdio.h>  /* Standard I/O Library: printf */
 #include <stdlib.h> /* Standard Library: malloc, calloc, free, ralloc */
-#include <chrono> /* Console Debug */
-#include <thread> /* Console Debug */
+#include <chrono>   /* Console Debug */
+#include <thread>   /* Console Debug */
 #include <math.h>
 #include <time.h>
-#include <omp.h>
+#include <omp.h>    /* OpenMP Header */    
 
 #define MOD(a,b) ((((a)%(b))+(b))%(b))
+
+
+void initialize( bool ** matrix, int rowDim, int colDim ){
+    for (int i=0; i<rowDim; ++i){
+        for (int j=0; j<colDim; ++j) matrix[i][j] = 0;
+    }
+}
 
 void fillCellularSpace( bool ** matrix, int rowDim, int colDim ){
     matrix[10][10] = 1;
@@ -31,9 +38,6 @@ struct Neighborhood
 
 };
 
-/*
-This function has to return the neighborhood of a given site on the cellular space
-*/
 struct Neighborhood neighborhoodOf(bool ** matrix, int row, int col, int rowDim, int colDim){
     struct Neighborhood nbhd;
     nbhd.up = matrix[ MOD(row - 1,rowDim) ][ col ];
@@ -57,6 +61,7 @@ struct Neighborhood neighborhoodOf(bool ** matrix, int row, int col, int rowDim,
     return nbhd;
 }
 
+
 bool nextState(bool ** matrix, int row, int col, int rowDim, int colDim){
     
     struct Neighborhood nbhd = neighborhoodOf(matrix,row,col,rowDim,colDim);
@@ -79,11 +84,10 @@ bool nextState(bool ** matrix, int row, int col, int rowDim, int colDim){
     }
 
     return life;
-
 }
 
 void parallelstepCPT(bool ** in, bool ** out, int rowDim, int colDim){
-    #pragma omp parallel num_threads(rowDim*colDim)
+    #pragma omp parallel num_threads(rowDim*colDim) default(shared)
     {
         int thread_id =  omp_get_thread_num();
         int my_row = thread_id / rowDim;
@@ -121,6 +125,25 @@ void parallelstepGPT(bool ** in, bool ** out, int rowDim, int colDim){
     }
 }
 
+void parallestepFor(bool ** in, bool ** out, int rowDim, int colDim){
+    int i = 0, j = 0;
+    #pragma omp parallel for
+    for (i = 0; i < rowDim; ++i){
+        for (j = 0; j < colDim; ++j){
+            out[i][j] = nextState(in,i,j,rowDim,colDim);
+        }
+    }
+}
+
+void sequentialstep(bool ** in, bool ** out, int rowDim, int colDim){
+    int i = 0, j = 0;
+    for (i = 0; i < rowDim; ++i){
+        for (j = 0; j < colDim; ++j){
+            out[i][j] = nextState(in,i,j,rowDim,colDim);
+        }
+    }
+}
+
 void see(bool ** matrix, int rowDim, int colDim){
     printf("\n");
     int i = 0;
@@ -132,29 +155,76 @@ void see(bool ** matrix, int rowDim, int colDim){
     printf("\n");
 }
 
+void save(const char * filename, bool ** matrix, int rowDim, int colDim){
+    FILE * pf = fopen(filename,"w");
+    for (int i=0; i<rowDim; ++i){
+        for (int j=0; j<colDim; ++j) fprintf(pf, "%d\t", matrix[i][j]);
+        fprintf(pf, "\n");
+    }
+    fclose(pf);
+}
+
+void savetime(int matrixDim, float time){
+    FILE * pf = fopen("time.dat","a+");
+    fprintf(pf, "%d\t%f\n", matrixDim,time);
+    fclose(pf); 
+}
+
 void evolve(bool ** in, bool ** out, int rowDim, int colDim, int generations){
     int i = 0;
     clock_t start = 0.0, end = 0.0;
     double sum = 0.0;
+    char filename[30];
+
+    // Save CA initial configuration
+    #ifdef SAVEINIT
+    sprintf(filename,"dim_%d_gen_%d.dat",rowDim,0);
+    save(filename,in,rowDim,colDim);
+    #endif
+
     for (i = 1; i <= generations; ++i){
         start = clock();
+
+        #if PARALLEL == 1
         parallelstepCPT(in,out,rowDim,colDim);
-        // parallelstepGPT(in,out,rowDim,colDim);
+        #elif PARALLEL == 2
+        parallelstepGPT(in,out,rowDim,colDim);
+        #elif PARALLEL == 3
+        parallestepFor(in,out,rowDim,colDim);
+        #else
+        sequentialstep(in,out,rowDim,colDim);
+        #endif
+
         end = clock();
         sum += (end -start) / (double) CLOCKS_PER_SEC;
         
-        see(out,rowDim,colDim);
-
         bool ** temp = in;
         in = out;
         out = temp;
 
+        #ifdef DEBUG
+        see(in,rowDim,colDim);
         std::this_thread::sleep_for(std::chrono::duration<double>(0.3));
         printf("\033[H\033[J");
+        #endif
+        
+        // Save all CA generations
+        #ifdef SAVEALL
+        sprintf(filename,"dim_%d_gen_%d.dat",rowDim,i);
+        save(filename,in,rowDim,colDim);
+        #endif 
     }
-    // Average time calculation per generation
-    // Number of generations per second
-    printf("%f\t%f\n",(sum/Generations),Generations/sum);
+
+    // Save CA last generation
+    #ifdef SAVELAST
+    sprintf(filename,"dim_%d_gen_%d.dat",rowDim,generations);
+    save(filename,in,rowDim,colDim);
+    #endif
+
+    #ifdef TIME 
+    savetime(rowDim,sum);
+    #endif
+
 }
 
 int main(int argc, char const **argv)
@@ -163,8 +233,8 @@ int main(int argc, char const **argv)
     /* The matrix dimensions has to be even (pair) and multiple of the number
     of processing cores */
     if(argc < 3){
-        printf("CA dimension is required as argument\n");
-        return EXIT_SUCCESS;
+        printf("CA dimension and number of generations are required as argument\n");
+        return EXIT_FAILURE;
     }
     
     int dim = atoi(argv[1]);
@@ -182,6 +252,8 @@ int main(int argc, char const **argv)
         out[i] = (bool *) malloc(colDim*sizeof(bool));
     }
 
+    initialize(in,rowDim,colDim);
+    initialize(out,rowDim,colDim);
     fillCellularSpace(in,rowDim,colDim);
     evolve(in,out,rowDim,colDim,generations);
 
