@@ -1,16 +1,6 @@
-# EXPERIMENT SETTINGS
+# FILE
 TARGET = openmp
 EXT = .c
-# Matrix dimesnions (must be multiple of 4) and number of generations
-GENERATIONS = 100
-SIZES = 250 500 750 1000 1250
-ITERATIONS = 1 2 3
-PARALLEL_APPROACH = 3
-
-# DEBUG SETTINGS
-DEBUG_SIZE = 210
-DEBUG_GENERATIONS = 10
-DEBUG_PARALLEL_APPROACH = 2
 
 # HABAILABLE COMPILATION FLAGS
 # -D DEBUG prin every generation by console
@@ -23,18 +13,26 @@ DEBUG_PARALLEL_APPROACH = 2
 # -D PARALLEL is 3 the parallel approach taken is OMP Parallel for directive
 # Sequentila otherwise
 
+# DEBUG SETTINGS
+# Matrix dimesnions (must be multiple of 4) and number of generations
+D_GENERATIONS = 50
+D_SIZE = 20
+D_FLAGS = -D PARALLEL=3 -D NUM_THREADS=2 -D DEBUG
+
+# EXPERIMENT SETTINGS
+# Matrix dimesnions (must be multiple of 4) and number of generations
+GENERATIONS = 100
+SIZES = 250 500 750 1000 1250 1500
+ITERATIONS = 1 2 3
+FLAGS = -D PARALLEL=3 -D NUM_THREADS=2 -D TIME
+
 # Run in debug mode
 debug: clean compiledebug
-	@./$(TARGET) $(DEBUG_SIZE) $(DEBUG_GENERATIONS)
+	@./$(TARGET) $(D_SIZE) $(D_GENERATIONS)
 
 compiledebug:
-	@g++ $(TARGET)$(EXT) -o $(TARGET) \
-	-std=gnu++11 \
-	-fopenmp \
-	-D SAVEINIT \
-	-D SAVELAST \
-	-D TIME \
-	-D PARALLEL=$(DEBUG_PARALLEL_APPROACH)
+	@g++ $(TARGET)$(EXT) -o $(TARGET) -std=gnu++11 -fopenmp $(D_FLAGS)
+
 
 # Run simulation taking times
 experiment: clean compileexp
@@ -47,11 +45,7 @@ experiment: clean compileexp
 	done
 
 compileexp:
-	@g++ $(TARGET)$(EXT) -o $(TARGET) \
-	-std=gnu++11 \
-	-fopenmp \
-	-D TIME \
-	-D PARALLEL=$(PARALLEL_APPROACH)
+	@g++ $(TARGET)$(EXT) -o $(TARGET) -std=gnu++11 -fopenmp $(FLAGS)
 
 clean:
 	rm -f $(TARGET) *.txt *.dat

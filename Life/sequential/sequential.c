@@ -1,9 +1,7 @@
-
-/* -- Host libaries -- */
-#include <stdio.h> /* Standard I/O Library: printf */
+#include <stdio.h>  /* Standard I/O Library: printf */
 #include <stdlib.h> /* Standard Library: malloc, calloc, free, ralloc */
-#include <chrono> /* Console Debug */
-#include <thread> /* Console Debug */
+#include <chrono>   /* Console Debug */
+#include <thread>   /* Console Debug */
 #include <math.h>
 #include <time.h>
 
@@ -85,9 +83,8 @@ bool nextState(bool ** matrix, int row, int col, int rowDim, int colDim){
 }
 
 void sequentialstep(bool ** in, bool ** out, int rowDim, int colDim){
-    int i = 0, j = 0;
-    for (i = 0; i < rowDim; ++i){
-        for (j = 0; j < colDim; ++j){
+    for (int i = 0; i < rowDim; ++i){
+        for (int j = 0; j < colDim; ++j){
             out[i][j] = nextState(in,i,j,rowDim,colDim);
         }
     }
@@ -120,7 +117,6 @@ void savetime(int matrixDim, float time){
 }
 
 void evolve(bool ** in, bool ** out, int rowDim, int colDim, int generations){
-    int i = 0;
     clock_t start = 0.0, end = 0.0;
     double sum = 0.0;
     char filename[30];
@@ -131,7 +127,7 @@ void evolve(bool ** in, bool ** out, int rowDim, int colDim, int generations){
     save(filename,in,rowDim,colDim);
     #endif
 
-    for (i = 1; i <= generations; ++i){
+    for (int i = 1; i <= generations; ++i){
         start = clock();
         sequentialstep(in,out,rowDim,colDim);
         end = clock();
@@ -141,6 +137,7 @@ void evolve(bool ** in, bool ** out, int rowDim, int colDim, int generations){
         in = out;
         out = temp;
 
+        // Print every generation by console
         #ifdef DEBUG
         see(in,rowDim,colDim);
         std::this_thread::sleep_for(std::chrono::duration<double>(0.3));

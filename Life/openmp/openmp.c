@@ -97,7 +97,7 @@ void parallelstepCPT(bool ** in, bool ** out, int rowDim, int colDim){
 }
 
 void parallelstepGPT(bool ** in, bool ** out, int rowDim, int colDim){
-    #pragma omp parallel num_threads(4)
+    #pragma omp parallel num_threads(NUM_THREADS)
     {
         int procs_num = omp_get_num_procs();
         int blockDim = rowDim / (procs_num / 2);
@@ -109,7 +109,7 @@ void parallelstepGPT(bool ** in, bool ** out, int rowDim, int colDim){
         int x = 0;
         int y = 0;
 
-        // if (thread_id == 1){
+        // if (thread_id == 2){
         //     printf("I ' am thread %d\n",thread_id);
         //     printf("BlockDim %d\n",blockDim);
         //     printf("blockx,blocky %d,%d\n",blockx,blocky);
@@ -126,10 +126,17 @@ void parallelstepGPT(bool ** in, bool ** out, int rowDim, int colDim){
 }
 
 void parallestepFor(bool ** in, bool ** out, int rowDim, int colDim){
-    #pragma omp parallel for 
-    for (int i = 0; i < rowDim; ++i){
-        for (int j = 0; j < colDim; ++j){
-            out[i][j] = nextState(in,i,j,rowDim,colDim);
+    int i = 0; 
+    int j = 0;
+    #pragma omp parallel shared(in,out,rowDim,colDim) num_threads(NUM_THREADS)
+    {
+        // int thread_id = omp_get_thread_num();
+        #pragma omp for private(i,j)
+        for (i = 0; i < rowDim; ++i){
+            for (j = 0; j < colDim; ++j){
+                // printf("Thread %d => %d,%d\n",thread_id,i,j);    
+                out[i][j] = nextState(in,i,j,rowDim,colDim);
+            }
         }
     }
 }
@@ -182,19 +189,25 @@ void evolve(bool ** in, bool ** out, int rowDim, int colDim, int generations){
     #endif
 
     for (i = 1; i <= generations; ++i){
-        start = clock();
-
+       
         #if PARALLEL == 1
+        start = clock();
         parallelstepCPT(in,out,rowDim,colDim);
+        end = clock();
         #elif PARALLEL == 2
+        start = clock();
         parallelstepGPT(in,out,rowDim,colDim);
+        end = clock();
         #elif PARALLEL == 3
+        start = clock();
         parallestepFor(in,out,rowDim,colDim);
+        end = clock();
         #else
+        start = 0.0;
         sequentialstep(in,out,rowDim,colDim);
+        end = 0.0;
         #endif
 
-        end = clock();
         sum += (end -start) / (double) CLOCKS_PER_SEC;
         
         bool ** temp = in;
