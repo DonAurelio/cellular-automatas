@@ -126,10 +126,9 @@ void parallelstepGPT(bool ** in, bool ** out, int rowDim, int colDim){
 }
 
 void parallestepFor(bool ** in, bool ** out, int rowDim, int colDim){
-    int i = 0, j = 0;
-    #pragma omp parallel for
-    for (i = 0; i < rowDim; ++i){
-        for (j = 0; j < colDim; ++j){
+    #pragma omp parallel for 
+    for (int i = 0; i < rowDim; ++i){
+        for (int j = 0; j < colDim; ++j){
             out[i][j] = nextState(in,i,j,rowDim,colDim);
         }
     }

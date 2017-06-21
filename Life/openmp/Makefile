@@ -5,7 +5,12 @@ EXT = .c
 GENERATIONS = 100
 SIZES = 250 500 750 1000 1250
 ITERATIONS = 1 2 3
-PARALLEL_APPROACH = 1
+PARALLEL_APPROACH = 3
+
+# DEBUG SETTINGS
+DEBUG_SIZE = 210
+DEBUG_GENERATIONS = 10
+DEBUG_PARALLEL_APPROACH = 2
 
 # HABAILABLE COMPILATION FLAGS
 # -D DEBUG prin every generation by console
@@ -18,26 +23,18 @@ PARALLEL_APPROACH = 1
 # -D PARALLEL is 3 the parallel approach taken is OMP Parallel for directive
 # Sequentila otherwise
 
-# Run one
-run: clean compile
-	@./$(TARGET) 20 10
-
-compile:
-	@g++ $(TARGET)$(EXT) -o $(TARGET) -std=gnu++11 
-
 # Run in debug mode
 debug: clean compiledebug
-	@./$(TARGET) 20 20
+	@./$(TARGET) $(DEBUG_SIZE) $(DEBUG_GENERATIONS)
 
 compiledebug:
 	@g++ $(TARGET)$(EXT) -o $(TARGET) \
 	-std=gnu++11 \
 	-fopenmp \
-	-D DEBUG \
 	-D SAVEINIT \
 	-D SAVELAST \
 	-D TIME \
-	-D PARALLEL=$(PARALLEL_APPROACH)
+	-D PARALLEL=$(DEBUG_PARALLEL_APPROACH)
 
 # Run simulation taking times
 experiment: clean compileexp
