@@ -95,7 +95,12 @@ void see(bool ** matrix, int rowDim, int colDim){
     int i = 0;
     for (i=0; i<rowDim; ++i){
         int j = 0;
-        for (j=0; j<colDim; ++j) printf("%d\t",matrix[i][j]);
+        for (j=0; j<colDim; ++j){
+            if(matrix[i][j] == 0)
+                printf(" \t");
+            else
+                printf("%d\t",matrix[i][j]);
+        } 
         printf("\n");
     }
     printf("\n");

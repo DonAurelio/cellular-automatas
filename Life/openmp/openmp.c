@@ -86,25 +86,15 @@ bool nextState(bool ** matrix, int row, int col, int rowDim, int colDim){
     return life;
 }
 
-void parallelstepCPT(bool ** in, bool ** out, int rowDim, int colDim){
-    #pragma omp parallel num_threads(rowDim*colDim) default(shared)
-    {
-        int thread_id =  omp_get_thread_num();
-        int my_row = thread_id / rowDim;
-        int my_col = MOD(thread_id,colDim);
-        out[my_row][my_col] = nextState(in,my_row,my_col,rowDim,colDim);
-    }
-}
-
 void parallelstepGPT(bool ** in, bool ** out, int rowDim, int colDim){
     #pragma omp parallel num_threads(NUM_THREADS)
     {
-        int procs_num = omp_get_num_procs();
-        int blockDim = rowDim / (procs_num / 2);
+        int num_threads = omp_get_num_threads();
+        int blockDim = rowDim / (num_threads / 2);
         int thread_id = omp_get_thread_num();
 
-        int blockx = thread_id / (procs_num/2);
-        int blocky = MOD(thread_id,(procs_num/2));
+        int blockx = thread_id / (num_threads/2);
+        int blocky = MOD(thread_id,(num_threads/2));
 
         int x = 0;
         int y = 0;
@@ -128,13 +118,11 @@ void parallelstepGPT(bool ** in, bool ** out, int rowDim, int colDim){
 void parallestepFor(bool ** in, bool ** out, int rowDim, int colDim){
     int i = 0; 
     int j = 0;
-    #pragma omp parallel shared(in,out,rowDim,colDim) num_threads(NUM_THREADS)
+    #pragma omp parallel num_threads(NUM_THREADS)
     {
-        // int thread_id = omp_get_thread_num();
-        #pragma omp for private(i,j)
+        #pragma omp for private(j)
         for (i = 0; i < rowDim; ++i){
             for (j = 0; j < colDim; ++j){
-                // printf("Thread %d => %d,%d\n",thread_id,i,j);    
                 out[i][j] = nextState(in,i,j,rowDim,colDim);
             }
         }
@@ -155,7 +143,12 @@ void see(bool ** matrix, int rowDim, int colDim){
     int i = 0;
     for (i=0; i<rowDim; ++i){
         int j = 0;
-        for (j=0; j<colDim; ++j) printf("%d\t",matrix[i][j]);
+        for (j=0; j<colDim; ++j){
+            if(matrix[i][j] == 0)
+                printf(" \t");
+            else
+                printf("%d\t",matrix[i][j]);
+        } 
         printf("\n");
     }
     printf("\n");
@@ -192,15 +185,11 @@ void evolve(bool ** in, bool ** out, int rowDim, int colDim, int generations){
        
         #if PARALLEL == 1
         start = clock();
-        parallelstepCPT(in,out,rowDim,colDim);
+        parallestepFor(in,out,rowDim,colDim);
         end = clock();
         #elif PARALLEL == 2
         start = clock();
         parallelstepGPT(in,out,rowDim,colDim);
-        end = clock();
-        #elif PARALLEL == 3
-        start = clock();
-        parallestepFor(in,out,rowDim,colDim);
         end = clock();
         #else
         start = 0.0;
@@ -239,6 +228,76 @@ void evolve(bool ** in, bool ** out, int rowDim, int colDim, int generations){
 
 }
 
+void parallelevolve(bool ** in, bool ** out, int rowDim, int colDim, int generations){
+    int i = 0;
+    clock_t start = 0.0, end = 0.0;
+    double sum = 0.0;
+    char filename[30];
+
+    // Save CA initial configuration
+    #ifdef SAVEINIT
+    sprintf(filename,"dim_%d_gen_%d.dat",rowDim,0);
+    save(filename,in,rowDim,colDim);
+    #endif
+
+    start = clock();
+    #pragma omp parallel private(i) shared(in,out,rowDim,colDim,generations) num_threads(NUM_THREADS)
+    {
+        for (i = 1; i <= generations; ++i){
+           
+            int li = 0; 
+            int lj = 0;
+   
+            #pragma omp for private(li,lj)
+            for (li = 0; li < rowDim; ++li){
+                for (lj = 0; lj < colDim; ++lj){
+                    out[li][lj] = nextState(in,li,lj,rowDim,colDim);
+                }
+            }
+
+            #pragma omp barrier 
+            
+            #pragma omp master
+            {
+                bool ** temp = in;
+                in = out;
+                out = temp;
+            }
+
+            #ifdef DEBUG
+            #pragma omp master
+            {
+                see(in,rowDim,colDim);
+                std::this_thread::sleep_for(std::chrono::duration<double>(0.3));
+                printf("\033[H\033[J");
+            }
+            #endif
+            
+            #pragma omp barrier
+
+            // Save all CA generations
+            // #ifdef SAVEALL
+            // sprintf(filename,"dim_%d_gen_%d.dat",rowDim,i);
+            // save(filename,in,rowDim,colDim);
+            // #endif 
+        }
+    }
+    end = clock();
+    sum += (end -start) / (double) CLOCKS_PER_SEC;
+
+    // Save CA last generation
+    #ifdef SAVELAST
+    sprintf(filename,"dim_%d_gen_%d.dat",rowDim,generations);
+    save(filename,in,rowDim,colDim);
+    #endif
+
+    #ifdef TIME 
+    savetime(rowDim,sum);
+    #endif
+
+}
+
+
 int main(int argc, char const **argv)
 {
     /* Matrix dimesions */
@@ -268,6 +327,7 @@ int main(int argc, char const **argv)
     initialize(out,rowDim,colDim);
     fillCellularSpace(in,rowDim,colDim);
     evolve(in,out,rowDim,colDim,generations);
+    // parallelevolve(in,out,rowDim,colDim,generations);
 
     /* -- Releasing resources -- */
     for (i=0; i<rowDim; ++i) free(in[i]);
