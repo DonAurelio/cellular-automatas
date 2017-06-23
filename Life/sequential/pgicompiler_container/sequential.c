@@ -83,12 +83,9 @@ bool nextState(bool ** matrix, int row, int col, int rowDim, int colDim){
 }
 
 void sequentialstep(bool ** in, bool ** out, int rowDim, int colDim){
-    #pragma acc kernels
-    {
-        for (int i = 0; i < rowDim; ++i){
-            for (int j = 0; j < colDim; ++j){
-                out[i][j] = nextState(in,i,j,rowDim,colDim);
-            }
+    for (int i = 0; i < rowDim; ++i){
+        for (int j = 0; j < colDim; ++j){
+            out[i][j] = nextState(in,i,j,rowDim,colDim);
         }
     }
 }

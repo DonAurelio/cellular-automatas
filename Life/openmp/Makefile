@@ -1,7 +1,7 @@
 # FILE
 TARGET = openmp
 EXT = .c
-COMPILER = g++-5
+COMPILER = g++
 
 # HABAILABLE COMPILATION FLAGS
 # -D DEBUG prin every generation by console
