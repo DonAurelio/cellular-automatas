@@ -35,7 +35,7 @@ struct Neighborhood
 };
 
 struct Neighborhood neighborhoodOf(bool ** matrix, int row, int col, int rowDim, int colDim){
-    struct Neighborhood nbhd;
+    struct Neighborhood nbhd = {1,0,1,1,0,1,0,0,1};
     nbhd.up = matrix[ MOD(row - 1,rowDim) ][ col ];
     nbhd.down = matrix[ MOD(row + 1,rowDim) ][ col ];
     nbhd.center = matrix[row][col];
@@ -47,6 +47,7 @@ struct Neighborhood neighborhoodOf(bool ** matrix, int row, int col, int rowDim,
     nbhd.right = matrix[ row ][ MOD(col + 1,colDim) ];
     nbhd.right_up = matrix[ MOD(row - 1,rowDim) ][ MOD(col + 1,colDim) ];
     nbhd.right_down = matrix[ MOD(row + 1,rowDim) ][ MOD(col + 1,colDim) ];
+
 
     // printf("Neighborhood of %d,%d\n", row, col);
     // printf("%d\t%d\t%d\n%d\t%d\t%d\n%d\t%d\t%d\n",
@@ -63,29 +64,31 @@ bool nextState(bool ** matrix, int row, int col, int rowDim, int colDim){
     struct Neighborhood nbhd = neighborhoodOf(matrix,row,col,rowDim,colDim);
 
     int sum = nbhd.left_up + nbhd.up + nbhd.right_up + nbhd.left + nbhd.right + nbhd.left_down + nbhd.down + nbhd.right_down;
-    // int site = nbhd.center;
-    // int life = ( site == 1 ) ? ( sum == 2 || sum == 3 ) ? 1:0 : ( sum == 3 ) ? 1:0;
+    int site = nbhd.center;
+    int life = ( site == 1 ) ? ( sum == 2 || sum == 3 ) ? 1:0 : ( sum == 3 ) ? 1:0;
 
-    int life = nbhd.center;
-    // A live cell will die if it has less than two live neighbours (under population)
-    // A live cell will die if it has more than three live neighbours (overcrowding)
-    if(life == 1 && (sum < 2 || sum > 3)){
-    	life = 0;
-    }else if(life == 1 && (sum == 2 || sum == 3)){
-    // A live cell will stay alive in the next generation if it has two or three live neighbours
-    	life = 1;
-    }else if(life == 0 && sum == 3){
-	// A dead cell will become alive if it has exactly three live neighbours. Else it will stay dead
-    	life = 1;
-    }
+ //    int life = nbhd.center;
+ //    // A live cell will die if it has less than two live neighbours (under population)
+ //    // A live cell will die if it has more than three live neighbours (overcrowding)
+ //    if(life == 1 && (sum < 2 || sum > 3)){
+ //    	life = 0;
+ //    }else if(life == 1 && (sum == 2 || sum == 3)){
+ //    // A live cell will stay alive in the next generation if it has two or three live neighbours
+ //    	life = 1;
+ //    }else if(life == 0 && sum == 3){
+	// // A dead cell will become alive if it has exactly three live neighbours. Else it will stay dead
+ //    	life = 1;
+ //    }
 
     return life;
 }
 
 void sequentialstep(bool ** in, bool ** out, int rowDim, int colDim){
-    #pragma acc kernels
+    #pragma acc data copyin(in[0:rowDim][0:colDim])
     {
+        #pragma acc parallel loop vector_length(colDim) num_gangs(rowDim) gang 
         for (int i = 0; i < rowDim; ++i){
+            #pragma acc loop vector
             for (int j = 0; j < colDim; ++j){
                 out[i][j] = nextState(in,i,j,rowDim,colDim);
             }

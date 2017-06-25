@@ -1,5 +1,5 @@
 # FILE
-TARGET = sequential
+TARGET = _openacc
 EXT = .c
 COMPILER = pgc++
 
@@ -14,11 +14,11 @@ COMPILER = pgc++
 
 # DEBUG SETTINGS
 # Matrix dimesnions (must be multiple of 4) and number of generations
-D_GENERATIONS = 50
-D_SIZE = 4000
-D_FLAGS = -D DEBUG
-# D_CFLAGS = -std=c++11 -O3 -acc -ta=tesla:cc30 -Minfo=accel
-D_CFLAGS = -std=c++11 -O3 -acc -ta=nvidia,time -Minfo=accel
+D_GENERATIONS = 100
+D_SIZE = 1024
+D_FLAGS = -D TIME -D SAVEINIT -D SAVELAST
+D_CFLAGS = -std=c++11 -O3 -acc -ta=tesla:cc30,time -Minfo=accel
+# D_CFLAGS = -std=c++11 -O3 -acc -ta=nvidia,time -Minfo=accel
 
 # EXPERIMENT SETTINGS
 # Matrix dimesnions (must be multiple of 4) and number of generations

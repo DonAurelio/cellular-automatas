@@ -1,0 +1,33 @@
+"sequential.c", line 130: warning: variable "filename" was declared but never
+          referenced
+      char filename[30];
+           ^
+
+neighborhoodOf(bool **, int, int, int, int):
+     37, Generating implicit acc routine seq
+nextState(bool **, int, int, int, int):
+     61, Generating implicit acc routine seq
+sequentialstep(bool **, bool **, int, int):
+     87, Generating implicit copyout(out[:rowDim][:colDim])
+     88, Complex loop carried dependence of out->,out->-> prevents parallelization
+         Accelerator kernel generated
+         88, #pragma acc loop seq
+         89, #pragma acc loop seq
+     88, Accelerator scalar kernel generated
+     89, Complex loop carried dependence of out->,out->-> prevents parallelization
+
+Accelerator Kernel Timing data
+/CAs/Life/openacc/sequential.c
+  _Z14sequentialstepPPbS0_ii  NVIDIA  devicenum=0
+    time(us): 0
+    87: data region reached 1 time
+        33: kernel launched 4000 times
+            grid: [1]  block: [128]
+            elapsed time(us): total=107,392 max=792 min=20 avg=26
+    87: compute region reached 1 time
+        88: kernel launched 1 time
+            grid: [1]  block: [1]
+             device time(us): total=0 max=0 min=0 avg=0
+Makefile:33: recipe for target 'debug' failed
+make: *** [debug] Error 1
+
