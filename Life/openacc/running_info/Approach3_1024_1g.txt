@@ -1,0 +1,41 @@
+neighborhoodOf(bool **, int, int, int, int):
+     37, Generating implicit acc routine seq
+nextState(bool **, int, int, int, int):
+     62, Generating implicit acc routine seq
+evolve(bool **, bool **, int, int, int):
+    136, Generating copy(in[:rowDim][:colDim])
+         Generating create(in_new[:][:])
+    137, Accelerator kernel generated
+         Generating Tesla code
+        139, #pragma acc loop gang(rowDim) /* blockIdx.x */
+        141, #pragma acc loop vector(colDim) /* threadIdx.x */
+    141, Loop is parallelizable
+    144, Accelerator kernel generated
+         Generating Tesla code
+        147, #pragma acc loop gang /* blockIdx.x */
+        149, #pragma acc loop vector(128) /* threadIdx.x */
+    149, Loop is parallelizable
+
+Accelerator Kernel Timing data
+/CAs/Life/openacc/openacc.c
+  _Z6evolvePPbS0_iii  NVIDIA  devicenum=0
+    time(us): 234,430
+    136: data region reached 2 times
+        33: kernel launched 1024 times
+            grid: [1]  block: [128]
+             device time(us): total=4,184 max=11 min=4 avg=4
+            elapsed time(us): total=24,752 max=495 min=20 avg=24
+        136: data copyin transfers: 1024
+             device time(us): total=9,536 max=24 min=3 avg=9
+        154: data copyout transfers: 1024
+             device time(us): total=10,885 max=134 min=4 avg=10
+    137: compute region reached 100 times
+        137: kernel launched 100 times
+            grid: [1024]  block: [1024]
+             device time(us): total=190,125 max=1,935 min=1,882 avg=1,901
+            elapsed time(us): total=192,670 max=2,013 min=1,899 avg=1,926
+    144: compute region reached 100 times
+        144: kernel launched 100 times
+            grid: [1024]  block: [128]
+             device time(us): total=19,700 max=198 min=196 avg=197
+            elapsed time(us): total=22,425 max=259 min=214 avg=224

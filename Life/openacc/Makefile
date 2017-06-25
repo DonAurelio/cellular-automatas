@@ -1,5 +1,5 @@
 # FILE
-TARGET = _openacc
+TARGET = openacc
 EXT = .c
 COMPILER = pgc++
 

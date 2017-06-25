@@ -1,0 +1,55 @@
+neighborhoodOf(bool **, int, int, int, int):
+     37, Generating implicit acc routine seq
+nextState(bool **, int, int, int, int):
+     62, Generating implicit acc routine seq
+evolve(bool **, bool **, int, int, int):
+    134, Generating copyin(in[:rowDim][:colDim])
+    135, Generating implicit copyout(out[:rowDim][:colDim])
+         Accelerator kernel generated
+         Generating Tesla code
+        137, #pragma acc loop gang(rowDim) /* blockIdx.x */
+        139, #pragma acc loop vector(colDim) /* threadIdx.x */
+    139, Loop is parallelizable
+    142, Generating implicit copyin(out[:rowDim][:colDim])
+         Accelerator kernel generated
+         Generating Tesla code
+        145, #pragma acc loop gang /* blockIdx.x */
+        147, #pragma acc loop vector(128) /* threadIdx.x */
+    147, Loop is parallelizable
+
+Accelerator Kernel Timing data
+/CAs/Life/openacc/openacc.c
+  _Z6evolvePPbS0_iii  NVIDIA  devicenum=0
+    time(us): 3,196,540
+    134: data region reached 2 times
+        33: kernel launched 1024 times
+            grid: [1]  block: [128]
+             device time(us): total=4,114 max=7 min=4 avg=4
+            elapsed time(us): total=26,618 max=585 min=20 avg=25
+        134: data copyin transfers: 1024
+             device time(us): total=9,979 max=19 min=3 avg=9
+    135: compute region reached 100 times
+        135: kernel launched 100 times
+            grid: [1024]  block: [1024]
+             device time(us): total=197,058 max=2,015 min=1,780 avg=1,970
+            elapsed time(us): total=199,429 max=2,103 min=1,797 avg=1,994
+    135: data region reached 200 times
+        33: kernel launched 102400 times
+            grid: [1]  block: [128]
+             device time(us): total=411,145 max=11 min=4 avg=4
+            elapsed time(us): total=2,384,849 max=23,678 min=20 avg=23
+        142: data copyout transfers: 102400
+             device time(us): total=1,140,760 max=707 min=4 avg=11
+    142: compute region reached 100 times
+        142: kernel launched 100 times
+            grid: [1024]  block: [128]
+             device time(us): total=26,316 max=270 min=262 avg=263
+            elapsed time(us): total=31,927 max=585 min=291 avg=319
+    142: data region reached 200 times
+        33: kernel launched 102400 times
+            grid: [1]  block: [128]
+             device time(us): total=411,085 max=11 min=4 avg=4
+            elapsed time(us): total=2,334,572 max=1,102 min=20 avg=22
+        142: data copyin transfers: 102400
+             device time(us): total=996,083 max=70 min=3 avg=9
+root@6c506d8f7747:/CAs/Life/openacc# 

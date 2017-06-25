@@ -1,0 +1,31 @@
+neighborhoodOf(bool **, int, int, int, int):
+     37, Generating implicit acc routine seq
+nextState(bool **, int, int, int, int):
+     62, Generating implicit acc routine seq
+sequentialstep(bool **, bool **, int, int):
+     88, Generating copyin(in[:rowDim][:colDim])
+         Generating implicit copyout(out[:rowDim][:colDim])
+         Accelerator kernel generated
+         Generating Tesla code
+         90, #pragma acc loop gang(rowDim) /* blockIdx.x */
+         92, #pragma acc loop vector(colDim) /* threadIdx.x */
+     92, Loop is parallelizable
+
+Accelerator Kernel Timing data
+/CAs/Life/openacc/openacc.c
+  _Z14sequentialstepPPbS0_ii  NVIDIA  devicenum=0
+    time(us): 30,875
+    88: compute region reached 1 time
+        88: kernel launched 1 time
+            grid: [1024]  block: [1024]
+             device time(us): total=2,012 max=2,012 min=2,012 avg=2,012
+            elapsed time(us): total=2,029 max=2,029 min=2,029 avg=2,029
+    88: data region reached 4 times
+        33: kernel launched 2048 times
+            grid: [1]  block: [128]
+             device time(us): total=8,313 max=7 min=4 avg=4
+            elapsed time(us): total=51,932 max=616 min=20 avg=25
+        88: data copyin transfers: 1024
+             device time(us): total=9,785 max=21 min=3 avg=9
+        95: data copyout transfers: 1024
+             device time(us): total=10,765 max=24 min=4 avg=10
