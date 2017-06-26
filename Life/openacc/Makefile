@@ -45,12 +45,12 @@ experiment: clean
 	
 	@for size in $(SIZES); do \
 		for i in $(ITERATIONS); do \
-			@$(COMPILER) $(TARGET)$(EXT) -o $(TARGET) \
-				-D SIZE=$(D_SIZE) \
-				-D GENERATIONS=$(D_GENERATIONS) \
+			$(COMPILER) $(TARGET)$(EXT) -o $(TARGET) \
+				-D SIZE=$$size \
+				-D GENERATIONS=$(GENERATIONS) \
 				$(CFLAGS) \
-				$(FLAGS)
-			./$(TARGET) $$size $(GENERATIONS); \
+				$(FLAGS); \
+			./$(TARGET); \
 		done; \
 		echo $$size "done !"; \
 	done
